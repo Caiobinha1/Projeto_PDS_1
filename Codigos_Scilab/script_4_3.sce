@@ -7,7 +7,7 @@ clc;
 clear;
 
 // Arquivo de audio de entrada (localizado na pasta pai)
-arquivo_entrada = "../input_voice.wav";
+arquivo_entrada = "../teste.wav";
 
 // Tenta carregar o audio usando o wavread ou audioread
 try
