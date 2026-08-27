@@ -1,0 +1,11 @@
+# Ignorar script gerador de PDF (conforme pedido)
+generate_report.py
+
+# Ignorar caches do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignorar pastas de IDEs
+.idea/
+.vscode/
