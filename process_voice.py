@@ -95,10 +95,9 @@ plt.xlabel("Tempo (segundos)")
 plt.ylabel("Amplitude")
 plt.ylim(-1.1, 1.1)
 
-# Subplot 2: Espectro de frequência no domínio da frequência
+# Subplot 2: Espectro de frequência no domínio da frequência (0 a 10 kHz)
 plt.subplot(2, 1, 2)
 N_fft = 8192
-# Pegamos o trecho com voz ativa a partir do segundo 2 (evita o silencio inicial)
 n_start_voice = int(2.0 * fs)
 trecho_orig = sinal[n_start_voice : n_start_voice + N_fft]
 fft_result = np.fft.fft(trecho_orig * np.hanning(N_fft))
@@ -108,13 +107,33 @@ f = fft_freqs[:metade]
 magnitude = np.abs(fft_result[:metade])
 magnitude = magnitude / np.max(magnitude)  # Normaliza
 plt.plot(f, magnitude, color='#805AD5', alpha=0.9)
-plt.title("Espectro de Frequência do Sinal de Voz Original (Domínio da Frequência)")
+plt.title("Espectro de Frequência do Sinal de Voz Original (0 a 10 kHz)")
 plt.xlabel("Frequência (Hz)")
 plt.ylabel("Magnitude Normalizada")
-plt.xlim(0, 10000)  # Foca na faixa de 0 a 10 kHz (zoom solicitado)
+plt.xlim(0, 10000)
 
 plt.tight_layout()
 plt.savefig(os.path.join(PASTA_GRAFICOS, "sinal_original.png"), dpi=150)
+plt.close()
+
+# Gráfico adicional para o Sinal Original com Zoom de 0 a 2500 Hz
+plt.figure(figsize=(10, 8))
+plt.subplot(2, 1, 1)
+plt.plot(tempo, sinal, color='#3182CE', alpha=0.9, linewidth=0.8)
+plt.title("Formato de Onda do Sinal de Voz Original (Domínio do Tempo)")
+plt.xlabel("Tempo (segundos)")
+plt.ylabel("Amplitude")
+plt.ylim(-1.1, 1.1)
+
+plt.subplot(2, 1, 2)
+plt.plot(f, magnitude, color='#805AD5', alpha=0.9)
+plt.title("Espectro de Frequência do Sinal de Voz Original (Zoom: 0 a 2500 Hz)")
+plt.xlabel("Frequência (Hz)")
+plt.ylabel("Magnitude Normalizada")
+plt.xlim(0, 2500)
+
+plt.tight_layout()
+plt.savefig(os.path.join(PASTA_GRAFICOS, "sinal_original_zoom.png"), dpi=150)
 plt.close()
 
 
@@ -133,33 +152,52 @@ def salvar_audio(nome, dados_filtrados):
     return dados_norm
 
 def plotar_e_salvar_espectro(sinais_lista, nomes_legendas, titulo, nome_arquivo_plot):
-    """Calcula a FFT de cada sinal e plota os espectros em modulo no mesmo grafico"""
-    plt.figure()
+    """Calcula a FFT de cada sinal e plota os espectros em modulo (versao 0-10kHz e versao zoom 0-2500Hz)"""
     n_start_voice = int(2.0 * fs)
     N_fft = 4096
+
+    # 1. Versao 0 a 10 kHz
+    plt.figure()
     for sinal_temp, legenda in zip(sinais_lista, nomes_legendas):
-        # Pegamos o trecho com voz ativa a partir do segundo 2 (evita o silencio inicial)
         trecho = sinal_temp[n_start_voice : n_start_voice + N_fft]
         fft_result = np.fft.fft(trecho * np.hanning(N_fft))
         fft_freqs = np.fft.fftfreq(N_fft, d=1/fs)
-        
-        # Como o sinal e real, pegamos apenas a metade positiva das frequencias
         metade = N_fft // 2
         f = fft_freqs[:metade]
         magnitude = np.abs(fft_result[:metade])
-        
-        # Normalizando a magnitude para visualizacao (escala linear)
         magnitude = magnitude / np.max(magnitude)
-        
         plt.plot(f, magnitude, label=legenda, alpha=0.8)
         
-    plt.title(titulo)
+    plt.title(f"{titulo} (0 a 10 kHz)")
     plt.xlabel("Frequência (Hz)")
     plt.ylabel("Magnitude Normalizada")
-    plt.xlim(0, 10000)  # Foca na faixa de 0 a 10 kHz (zoom solicitado)
+    plt.xlim(0, 10000)
     plt.legend()
     plt.tight_layout()
     plt.savefig(os.path.join(PASTA_GRAFICOS, nome_arquivo_plot), dpi=150)
+    plt.close()
+
+    # 2. Versao Zoom (0 a 2500 Hz)
+    nome_base, ext = os.path.splitext(nome_arquivo_plot)
+    nome_zoom = f"{nome_base}_zoom{ext}"
+    plt.figure()
+    for sinal_temp, legenda in zip(sinais_lista, nomes_legendas):
+        trecho = sinal_temp[n_start_voice : n_start_voice + N_fft]
+        fft_result = np.fft.fft(trecho * np.hanning(N_fft))
+        fft_freqs = np.fft.fftfreq(N_fft, d=1/fs)
+        metade = N_fft // 2
+        f = fft_freqs[:metade]
+        magnitude = np.abs(fft_result[:metade])
+        magnitude = magnitude / np.max(magnitude)
+        plt.plot(f, magnitude, label=legenda, alpha=0.8)
+        
+    plt.title(f"{titulo} (Zoom: 0 a 2500 Hz)")
+    plt.xlabel("Frequência (Hz)")
+    plt.ylabel("Magnitude Normalizada")
+    plt.xlim(0, 2500)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(PASTA_GRAFICOS, nome_zoom), dpi=150)
     plt.close()
 
 # =========================================================================
@@ -285,7 +323,6 @@ wavfile.write(os.path.join(PASTA_AUDIOS, "output_4_4_downsampled.wav"), fs, np.i
 
 # Gera grafico de espectro para alteracao de taxa
 # Para o upsampling, o espectro repete (espelhamento). Para o downsampling, pode haver aliasing.
-plt.figure()
 
 # FFT do original, upsampled e downsampled baseados no trecho com voz ativa
 N_fft = 4096
@@ -297,25 +334,41 @@ trecho_down = y_down_norm[n_start_voice // 2 : n_start_voice // 2 + N_fft]
 # FFT do original
 fft_orig = np.abs(np.fft.fft(trecho_orig * np.hanning(N_fft)))[:N_fft//2]
 freq_orig = np.fft.fftfreq(N_fft, d=1/fs)[:N_fft//2]
-plt.plot(freq_orig, fft_orig / np.max(fft_orig), label="Original", alpha=0.7)
 
 # FFT do Upsampled
 fft_up = np.abs(np.fft.fft(trecho_up * np.hanning(N_fft)))[:N_fft//2]
 freq_up = np.fft.fftfreq(N_fft, d=1/(2*fs))[:N_fft//2]
-plt.plot(freq_up, fft_up / np.max(fft_up), label="Upsampled (2x Fs)", alpha=0.7, color='green')
 
 # FFT do Downsampled
 fft_down = np.abs(np.fft.fft(trecho_down * np.hanning(N_fft)))[:N_fft//2]
 freq_down = np.fft.fftfreq(N_fft, d=1/(fs/2))[:N_fft//2]
-plt.plot(freq_down, fft_down / np.max(fft_down), label="Downsampled (0.5x Fs)", alpha=0.7, color='red')
 
-plt.title("Espectro - Alteração de Taxa (Item 4.4)")
+# 1. Versao 0 a 10 kHz
+plt.figure()
+plt.plot(freq_orig, fft_orig / np.max(fft_orig), label="Original", alpha=0.7)
+plt.plot(freq_up, fft_up / np.max(fft_up), label="Upsampled (2x Fs)", alpha=0.7, color='green')
+plt.plot(freq_down, fft_down / np.max(fft_down), label="Downsampled (0.5x Fs)", alpha=0.7, color='red')
+plt.title("Espectro - Alteração de Taxa (Item 4.4 - 0 a 10 kHz)")
 plt.xlabel("Frequência (Hz)")
 plt.ylabel("Magnitude Normalizada")
-plt.xlim(0, 10000)  # Foca na faixa de 0 a 10 kHz para ver os efeitos de reamostragem
+plt.xlim(0, 10000)
 plt.legend()
 plt.tight_layout()
 plt.savefig(os.path.join(PASTA_GRAFICOS, "espectro_4_4_taxa.png"), dpi=150)
+plt.close()
+
+# 2. Versao Zoom (0 a 2500 Hz)
+plt.figure()
+plt.plot(freq_orig, fft_orig / np.max(fft_orig), label="Original", alpha=0.7)
+plt.plot(freq_up, fft_up / np.max(fft_up), label="Upsampled (2x Fs)", alpha=0.7, color='green')
+plt.plot(freq_down, fft_down / np.max(fft_down), label="Downsampled (0.5x Fs)", alpha=0.7, color='red')
+plt.title("Espectro - Alteração de Taxa (Item 4.4 - Zoom: 0 a 2500 Hz)")
+plt.xlabel("Frequência (Hz)")
+plt.ylabel("Magnitude Normalizada")
+plt.xlim(0, 2500)
+plt.legend()
+plt.tight_layout()
+plt.savefig(os.path.join(PASTA_GRAFICOS, "espectro_4_4_taxa_zoom.png"), dpi=150)
 plt.close()
 
 print("Simulações concluidas com sucesso! Todos os audios e graficos foram gerados.")

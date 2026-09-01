@@ -2,9 +2,8 @@
 
 Este repositório contém o código-fonte, dados e resultados do Projeto 1 da disciplina de Processamento Digital de Sinais (EEL7522) da Universidade Federal de Santa Catarina (UFSC).
 
-## Integrantes
+## Aluno
 - Caio Missfeld Carlos (Matrícula: 22202674)
-- Miguel Sória da Luz (Matrícula: 22100860)
 
 ## Estrutura do Projeto
 
